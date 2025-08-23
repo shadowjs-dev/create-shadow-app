@@ -17,6 +17,7 @@ Create ShadowJS apps with one command! This CLI tool helps you bootstrap new Sha
 - 📱 **Multiple Templates**: Choose from 2 starter templates
 - ⚡ **Zero Config**: Works out of the box with sensible defaults
 - 🛣️ **Router Support**: Built-in client-side routing with ShadowJS Router
+- 🎨 **TailwindCSS Ready**: Optional TailwindCSS v4 integration with pre-configured styles
 - 📚 **Git Integration**: Automatic git repository initialization
 - 🧪 **Well Tested**: Comprehensive test suite with Vitest
 - 🔒 **Security First**: Regular security audits and dependency updates
@@ -71,8 +72,9 @@ The CLI will guide you through the setup process:
 1. **Project Name**: Enter the name of your project
 2. **Language**: Choose between TypeScript or JavaScript
 3. **Template**: Select one of the available templates
-4. **Git Repository**: Choose whether to initialize a git repository
-5. **Router**: Choose whether to add ShadowJS Router for client-side routing
+4. **Router**: Choose whether to add ShadowJS Router for client-side routing
+5. **TailwindCSS**: Choose whether to use TailwindCSS v4 for styling
+6. **Git Repository**: Choose whether to initialize a git repository
 
 ## Project Structure
 
@@ -87,9 +89,11 @@ my-app/
 └── src/
     ├── main.jsx (or main.tsx if TypeScript selected)
     ├── App.jsx (or App.tsx if TypeScript selected)
-    ├── style.css
+    ├── style.css (or tailwind.css if TailwindCSS selected)
     └── vite-env.d.ts (if TypeScript selected)
 ```
+
+**Note**: If you choose TailwindCSS, the `style.css` file will contain TailwindCSS imports and pre-configured styles instead of traditional CSS.
 
 ## Getting Started
 
@@ -123,6 +127,37 @@ When you choose to add ShadowJS Router, the CLI will:
 - Update the App component to work with the router
 
 This provides a foundation for building multi-page applications with client-side routing.
+
+### TailwindCSS Integration
+
+When you choose to use TailwindCSS, the CLI will:
+
+- Add `tailwindcss` and `@tailwindcss/vite` as dependencies
+- Configure Vite to use the TailwindCSS plugin
+- Set up a `tailwind.css` file with Tailwind imports and pre-configured styles
+- Include utility classes and component styles for your chosen template
+
+The TailwindCSS setup includes:
+
+- **Base styles**: Reset and typography using Tailwind's base layer
+- **Component styles**: Pre-styled components for cards, buttons, and layouts
+- **Utility classes**: Common patterns used in the template
+- **Responsive design**: Mobile-first responsive utilities
+
+You can start using TailwindCSS classes immediately in your JSX/TSX components:
+
+```jsx
+function MyComponent() {
+  return (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-4">Hello World</h2>
+      <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+        Click me
+      </button>
+    </div>
+  );
+}
+```
 
 ## 🛠️ Development
 

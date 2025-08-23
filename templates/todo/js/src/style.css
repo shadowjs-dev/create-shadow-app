@@ -1,5 +1,3 @@
-/* Clean CSS for Todo App */
-
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
@@ -84,7 +82,7 @@ h1 {
   font-size: 1.1rem;
 }
 
-.todo-item.completed span {
+.todo-item span.completed {
   text-decoration: line-through;
   color: #6b7280;
 }

@@ -27,6 +27,7 @@ const [todos, setTodos] = useStore<Todo[]>([
     createdAt: new Date(),
   },
 ]);
+
 const [newTodo, setNewTodo] = useStore("");
 
 let inputRef!: HTMLInputElement;
@@ -88,9 +89,8 @@ export default function App() {
         <button onClick={addTodo}>Add</button>
       </div>
 
-      {/* Todo List */}
       <div class="todo-list">
-        <For each={todos().sort((a, b) => (a.completed ? 1 : -1))}>
+        <For each={todos().sort((a) => (a.completed ? 1 : -1))}>
           {(todo: Todo) => <TodoItem todo={todo} />}
         </For>
 

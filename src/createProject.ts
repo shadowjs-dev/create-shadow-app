@@ -9,11 +9,13 @@ export interface ProjectOptions {
   language: "ts" | "js";
   template: "counter" | "todo";
   useRouter: boolean;
+  useTailwind: boolean;
   initGit: boolean;
 }
 
 export async function createProject(options: ProjectOptions) {
-  const { projectName, language, template, useRouter, initGit } = options;
+  const { projectName, language, template, useRouter, useTailwind, initGit } =
+    options;
 
   const projectPath = path.resolve(process.cwd(), projectName);
 
@@ -25,19 +27,34 @@ export async function createProject(options: ProjectOptions) {
   // Create project directory
   await fs.ensureDir(projectPath);
 
-  // Copy template files
-  const templateDir = path.join(__dirname, "../templates", template);
+  // Copy template files from templates/<template>/<language>
+  const templateDir = path.join(
+    __dirname,
+    "../templates",
+    template,
+    language === "ts" ? "ts" : "js"
+  );
+  if (!(await fs.pathExists(templateDir))) {
+    throw new Error(
+      `Template not found at ${templateDir}. Ensure templates/${template}/${language} exists.`
+    );
+  }
   await fs.copy(templateDir, projectPath);
 
   // Generate package.json
-  const packageJson = generatePackageJson(projectName, language, useRouter);
+  const packageJson = generatePackageJson(
+    projectName,
+    language,
+    useRouter,
+    useTailwind
+  );
   await fs.writeFile(
     path.join(projectPath, "package.json"),
     JSON.stringify(packageJson, null, 2)
   );
 
   // Generate vite.config
-  const viteConfig = generateViteConfig(language);
+  const viteConfig = generateViteConfig(useTailwind);
   const viteConfigPath = path.join(
     projectPath,
     `vite.config.${language === "ts" ? "ts" : "js"}`
@@ -53,12 +70,17 @@ export async function createProject(options: ProjectOptions) {
     );
   }
 
-  // Update main files based on language
-  await updateMainFiles(projectPath, language);
+  // Ensure index.html points to correct main file
+  await ensureIndexHtmlScript(projectPath, language);
 
   // Setup router if requested
   if (useRouter) {
-    await setupRouter(projectPath, language, template);
+    await setupRouter(projectPath, language);
+  }
+
+  // Setup Tailwind if requested
+  if (useTailwind) {
+    await setupTailwind(projectPath);
   }
 
   // Create .gitignore
@@ -73,7 +95,8 @@ export async function createProject(options: ProjectOptions) {
 function generatePackageJson(
   projectName: string,
   language: "ts" | "js",
-  useRouter: boolean
+  useRouter: boolean,
+  useTailwind: boolean
 ) {
   return {
     name: projectName,
@@ -88,6 +111,10 @@ function generatePackageJson(
     dependencies: {
       "@shadow-js/core": "^0.1.0",
       ...(useRouter && { "@shadow-js/router": "^0.1.0" }),
+      ...(useTailwind && {
+        "@tailwindcss/vite": "^4.1.12",
+        tailwindcss: "^4.1.12",
+      }),
     },
     devDependencies: {
       "@shadow-js/vite": "^0.3.0",
@@ -97,16 +124,19 @@ function generatePackageJson(
   };
 }
 
-function generateViteConfig(language: "ts" | "js") {
-  const importStatement =
-    language === "ts"
-      ? 'import { defineConfig } from "vite";\nimport shadow from "@shadow-js/vite";'
-      : 'import { defineConfig } from "vite";\nimport shadow from "@shadow-js/vite";';
+function generateViteConfig(useTailwind: boolean) {
+  const lines = [
+    'import { defineConfig } from "vite";',
+    'import shadow from "@shadow-js/vite";',
+    ...(useTailwind ? ['import tailwindcss from "@tailwindcss/vite";'] : []),
+  ];
 
-  return `${importStatement}
+  const plugins = useTailwind ? "[shadow(), tailwindcss()]" : "[shadow()]";
+
+  return `${lines.join("\n")}
 
 export default defineConfig({
-  plugins: [shadow()],
+  plugins: ${plugins},
   server: {
     port: 3000,
   },
@@ -138,42 +168,18 @@ function generateTsConfig() {
   };
 }
 
-async function updateMainFiles(projectPath: string, language: "ts" | "js") {
-  const srcDir = path.join(projectPath, "src");
-
-  // Update HTML file to use correct extension
+async function ensureIndexHtmlScript(
+  projectPath: string,
+  language: "ts" | "js"
+) {
   const htmlFile = path.join(projectPath, "index.html");
   if (await fs.pathExists(htmlFile)) {
     let htmlContent = await fs.readFile(htmlFile, "utf-8");
-    if (language === "js") {
-      htmlContent = htmlContent.replace("/src/main.tsx", "/src/main.jsx");
-    }
+    htmlContent = htmlContent.replace(
+      /\/src\/main\.(t|j)sx/g,
+      `/src/main.${language === "ts" ? "tsx" : "jsx"}`
+    );
     await fs.writeFile(htmlFile, htmlContent);
-  }
-
-  // Rename main.tsx to main.js and App.tsx to App.js if JavaScript
-  if (language === "js") {
-    const tsMain = path.join(srcDir, "main.tsx");
-    const jsMain = path.join(srcDir, "main.jsx");
-    if (await fs.pathExists(tsMain)) {
-      await fs.move(tsMain, jsMain);
-      let content = await fs.readFile(jsMain, "utf-8");
-      content = content.replace(/import .*\.tsx/g, (match) =>
-        match.replace(".tsx", ".jsx")
-      );
-      await fs.writeFile(jsMain, content);
-    }
-
-    const tsApp = path.join(srcDir, "App.tsx");
-    const jsApp = path.join(srcDir, "App.jsx");
-    if (await fs.pathExists(tsApp)) {
-      await fs.move(tsApp, jsApp);
-      let content = await fs.readFile(jsApp, "utf-8");
-      content = content.replace(/import .*\.tsx/g, (match) =>
-        match.replace(".tsx", ".jsx")
-      );
-      await fs.writeFile(jsApp, content);
-    }
   }
 }
 
@@ -199,37 +205,31 @@ async function initializeGit(projectPath: string) {
   const execAsync = promisify(exec);
 
   try {
-    // Initialize git repository
     await execAsync("git init", { cwd: projectPath });
-
-    // Add all files
     await execAsync("git add .", { cwd: projectPath });
-
-    // Create initial commit
     await execAsync('git commit -m "Initial commit"', { cwd: projectPath });
   } catch (error) {
     console.warn("Failed to initialize git repository:", error);
   }
 }
 
-async function setupRouter(
-  projectPath: string,
-  language: "ts" | "js",
-  template: "counter" | "todo"
-) {
+async function setupRouter(projectPath: string, language: "ts" | "js") {
   const srcDir = path.join(projectPath, "src");
   const mainFile = path.join(
     srcDir,
     `main.${language === "ts" ? "tsx" : "jsx"}`
   );
-  const appFile = path.join(srcDir, `App.${language === "ts" ? "tsx" : "jsx"}`);
 
-  // Create a simple router setup
   const routerMainContent = `import { render } from "@shadow-js/core";
 import { Route, Router } from "@shadow-js/router";
 import App from "./App";
+import "./style.css";
 
-const root = document.getElementById("root")${language === "js" ? ";" : "!;"}
+const root = document.getElementById("root");
+if (!root) {
+  throw new Error("Root element not found");
+}
+
 render(
   <Router>
     <Route component={App} path="/" />
@@ -238,49 +238,27 @@ render(
 );`;
 
   await fs.writeFile(mainFile, routerMainContent);
-
-  // Update the App component to be simpler since it's now routed
-  const appContent =
-    language === "ts"
-      ? `import { useStore } from "@shadow-js/core";
-${template === "counter" ? 'import "./style.css";' : ""}
-
-export default function App() {
-  const [count, setCount] = useStore(0);
-
-  return (
-    <div class="app">
-      <h1>ShadowJS App with Router</h1>
-      <div class="counter">
-        <button onClick={() => setCount((c) => c - 1)}>-</button>
-        <span>{count()}</span>
-        <button onClick={() => setCount((c) => c + 1)}>+</button>
-      </div>
-      <p>Router is enabled! You can add more routes as needed.</p>
-    </div>
-  );
-}`
-      : `import { useStore } from "@shadow-js/core";
-${template === "counter" ? 'import "./style.css";' : ""}
-
-export default function App() {
-  const [count, setCount] = useStore(0);
-
-  return (
-    <div class="app">
-      <h1>ShadowJS App with Router</h1>
-      <div class="counter">
-        <button onClick={() => setCount((c) => c - 1)}>-</button>
-        <span>{count()}</span>
-        <button onClick={() => setCount((c) => c + 1)}>+</button>
-      </div>
-      <p>Router is enabled! You can add more routes as needed.</p>
-    </div>
-  );
-}`;
-
-  await fs.writeFile(appFile, appContent);
 }
 
-// Export utility functions for testing
+/**
+ * Tailwind setup:
+ * - Look for `tailwind.css` in the template folder
+ * - Replace `style.css` with its content
+ */
+async function setupTailwind(projectPath: string) {
+  const srcDir = path.join(projectPath, "src");
+  const stylePath = path.join(srcDir, "style.css");
+  const tailwindFile = path.join(srcDir, "tailwind.css");
+
+  if (await fs.pathExists(tailwindFile)) {
+    const tailwindContent = await fs.readFile(tailwindFile, "utf-8");
+    await fs.writeFile(stylePath, tailwindContent); // overwrite style.css
+    await fs.remove(tailwindFile); // cleanup
+  } else {
+    console.warn(
+      `⚠️ Tailwind file not found: ${tailwindFile}. Using default style.css.`
+    );
+  }
+}
+
 export { generatePackageJson, generateViteConfig, generateTsConfig };

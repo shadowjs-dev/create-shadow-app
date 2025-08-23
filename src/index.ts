@@ -39,7 +39,6 @@ async function main() {
         { name: "JavaScript", value: "js" },
       ],
     },
-
     {
       type: "list",
       name: "template",
@@ -54,13 +53,27 @@ async function main() {
     },
     {
       type: "confirm",
+      name: "useTailwind",
+      message: "Would you like to use Tailwind CSS?",
+      default: false,
+    },
+    {
+      type: "confirm",
       name: "initGit",
       message: "Initialize a git repository?",
       default: false,
     },
   ]);
 
-  const { projectName, language, template, useRouter, initGit } = answers;
+  const { projectName, language, template, useRouter, useTailwind, initGit } =
+    answers as {
+      projectName: string;
+      language: "ts" | "js";
+      template: "counter" | "todo";
+      useRouter: boolean;
+      useTailwind: boolean;
+      initGit: boolean;
+    };
 
   console.log(
     chalk.green(
@@ -70,14 +83,16 @@ async function main() {
   console.log(`   📁 Project: ${chalk.cyan(projectName)}`);
   console.log(`   🔧 Template: ${chalk.cyan(template)}`);
   console.log(`   🛣️ Router: ${chalk.cyan(useRouter ? "Yes" : "No")}`);
+  console.log(`   🎨 Tailwind: ${chalk.cyan(useTailwind ? "Yes" : "No")}`);
   console.log(`   📚 Git: ${chalk.cyan(initGit ? "Yes" : "No")}\n`);
 
   try {
     await createProject({
       projectName,
-      language: language as "ts" | "js",
-      template: template as "counter" | "todo",
+      language,
+      template,
       useRouter,
+      useTailwind,
       initGit,
     });
 

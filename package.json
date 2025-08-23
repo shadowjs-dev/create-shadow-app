@@ -1,6 +1,6 @@
 {
   "name": "create-shadow-app",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Create ShadowJS apps with Vite, TypeScript/JavaScript",
   "author": "Jehaad AL-Johani",
   "homepage": "https://github.com/shadowjs-dev/shadow#readme",
