@@ -81,6 +81,12 @@ export async function createProject(options: ProjectOptions) {
   // Setup Tailwind if requested
   if (useTailwind) {
     await setupTailwind(projectPath);
+  } else {
+    // If Tailwind isn't used, ensure any template tailwind.css is removed
+    const tailwindFilePath = path.join(projectPath, "src", "tailwind.css");
+    if (await fs.pathExists(tailwindFilePath)) {
+      await fs.remove(tailwindFilePath);
+    }
   }
 
   // Create .gitignore
