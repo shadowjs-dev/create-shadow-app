@@ -57,7 +57,7 @@
   "dependencies": {
     "chalk": "^5.3.0",
     "fs-extra": "^11.2.0",
-    "inquirer": "^12.9.3"
+    "inquirer": "^13.0.1"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.6",
