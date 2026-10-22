@@ -1,0 +1,26 @@
+import { A, Navigate, Outlet, useLocation, useNavigate, useParams } from "@shadow-js/router";
+
+export function Shell() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams();
+
+  return (
+    <div>
+      <nav>
+        <A to="/" class="brand" preload="intent">
+          Home
+        </A>
+        <A to="/posts" end activeClass="current">
+          Posts
+        </A>
+        <a href="/about">About</a>
+      </nav>
+      <button onClick={() => navigate("/posts/new", { replace: true })}>New</button>
+      <p>
+        {location.pathname} {id}
+      </p>
+      {id === undefined ? <Navigate to="/posts" replace /> : <Outlet />}
+    </div>
+  );
+}

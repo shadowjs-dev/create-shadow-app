@@ -1,0 +1,32 @@
+import { onMount, useEffect, useMemo, useSignal, useStore } from "@shadow-js/core";
+import { useRef } from "react";
+
+export function Todos({ initial }: { initial: string[] }) {
+  const [items, setItems] = useSignal(initial);
+  const [text, setText] = useStore("");
+  const [filter, setFilter] = useStore({ done: false });
+  const remaining = useMemo(() => items().length);
+  const input = useRef<HTMLInputElement>(null);
+
+  onMount(() => {
+    input.current?.focus();
+  });
+
+  useEffect(() => {
+    document.title = `${remaining()} left`;
+  });
+
+  const add = () => {
+    setItems([...items(), text()]);
+    setText("");
+  };
+
+  return (
+    <form onSubmit={add}>
+      <input ref={input} className="field" value={text()} onChange={(event) => setText(event.target.value)} />
+      <button type="button" onClick={() => setFilter({ done: !filter.done })}>
+        {filter.done ? "Done" : "Open"}: {remaining()}
+      </button>
+    </form>
+  );
+}

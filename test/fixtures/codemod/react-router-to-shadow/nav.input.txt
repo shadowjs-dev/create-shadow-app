@@ -1,0 +1,26 @@
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+
+export function Shell() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id } = useParams();
+
+  return (
+    <div>
+      <nav>
+        <Link to="/" className="brand" prefetch="intent">
+          Home
+        </Link>
+        <NavLink to="/posts" end activeClassName="current">
+          Posts
+        </NavLink>
+        <a href="/about">About</a>
+      </nav>
+      <button onClick={() => navigate("/posts/new", { replace: true })}>New</button>
+      <p>
+        {location.pathname} {id}
+      </p>
+      {id === undefined ? <Navigate to="/posts" replace /> : <Outlet />}
+    </div>
+  );
+}

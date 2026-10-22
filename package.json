@@ -1,0 +1,67 @@
+{
+  "name": "create-shadow-app",
+  "version": "1.0.0",
+  "description": "Create a new app from a starter template, with optional Tailwind, Biome, Vitest, Convex and Clerk",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "./dist/cli.js"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown --config-loader native",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "biome check .",
+    "test": "vitest run --project unit --project dom --project server",
+    "test:gc": "vitest run --project gc --passWithNoTests",
+    "test:perf": "vitest run --project perf --passWithNoTests",
+    "check": "npm run lint && npm run typecheck && npm run build && npm test && npm run test:perf && npm run test:gc"
+  },
+  "bin": {
+    "create-shadow-app": "./dist/cli.js"
+  },
+  "dependencies": {
+    "oxc-parser": "0.153.0"
+  },
+  "keywords": [
+    "shadowjs",
+    "scaffold",
+    "create",
+    "vite",
+    "create-shadow-app"
+  ],
+  "homepage": "https://create.shadowjs.net",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shadowjs-dev/create-shadow-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shadowjs-dev/create-shadow-app/issues"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "^24.0.0",
+    "happy-dom": "^21.0.3",
+    "tsdown": "0.23.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}

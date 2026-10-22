@@ -1,0 +1,147 @@
+=== .gitignore ===
+node_modules
+dist
+coverage
+*.log
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+!.env.public
+*.pem
+*.key
+=== README.md ===
+# app
+
+A ShadowJS single-page app.
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+## Scripts
+
+- `npm run dev` starts the development server with hot reload.
+- `npm run build` builds for production.
+- `npm run preview` serves the production build locally.
+- `npm run typecheck` type-checks with `tsc --noEmit`.
+=== index.html ===
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+=== package.json ===
+{
+  "name": "app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@shadow-js/core": "^1.0.0",
+    "@shadow-js/web": "^1.0.0"
+  },
+  "devDependencies": {
+    "@shadow-js/vite": "^1.0.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.3"
+  }
+}
+=== src/App.tsx ===
+import { useMemo, useStore } from "@shadow-js/core";
+import { For, Show } from "@shadow-js/web";
+
+export function App() {
+  const [count, setCount] = useStore(0);
+  const squares = useMemo(() =>
+    Array.from({ length: Math.min(count(), 5) }, (_, i) => (i + 1) ** 2),
+  );
+
+  return (
+    <main class="app">
+      <h1 class="title">ShadowJS</h1>
+      <p>Count: {count()}</p>
+      <button type="button" class="button" onClick={() => setCount((n) => n + 1)}>
+        Increment
+      </button>
+      <Show when={count() > 0} fallback={<p>Press the button.</p>}>
+        <ul>
+          <For each={squares()}>{(value) => <li>{value}</li>}</For>
+        </ul>
+      </Show>
+    </main>
+  );
+}
+=== src/index.css ===
+:root {
+  font-family: system-ui, sans-serif;
+  color-scheme: light dark;
+}
+.app {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 2rem;
+}
+.title {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+.button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+=== src/main.tsx ===
+import { render } from "@shadow-js/web";
+import { App } from "./App";
+import "./index.css";
+
+const root = document.getElementById("app");
+if (root === null) throw new Error("Missing #app element");
+
+render(() => <App />, root);
+=== src/vite-env.d.ts ===
+/// <reference types="vite/client" />
+=== tsconfig.json ===
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "jsxImportSource": "@shadow-js/web",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts"]
+}
+=== vite.config.ts ===
+import shadow from "@shadow-js/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({ plugins: [shadow()] });

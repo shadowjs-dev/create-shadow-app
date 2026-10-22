@@ -1,0 +1,29 @@
+import { Fragment } from "@shadow-js/web";
+import { onMount, useSignal } from "@shadow-js/core";
+import { render } from "preact";
+import { useRef } from "preact/hooks";
+import { signal } from "@preact/signals";
+
+const visits = signal(0);
+
+export function Counter({ start }: { start: number }) {
+  const [count, setCount] = useSignal(start);
+  const input = useRef<HTMLInputElement>(null);
+
+  onMount(() => {
+    input.current?.focus();
+  });
+
+  const bump = () => setCount(count() + 1);
+
+  return (
+    <Fragment>
+      <button ref={input} onClick={bump}>
+        {count()}
+      </button>
+      <p>{visits.value} visits</p>
+    </Fragment>
+  );
+}
+
+render(<Counter start={1} />, document.body);

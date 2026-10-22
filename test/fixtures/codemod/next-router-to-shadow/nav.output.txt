@@ -1,0 +1,17 @@
+import { A, useLocation, useRouter } from "@shadow-js/router";
+
+export function Nav() {
+  const router = useRouter();
+  const pathname = useLocation().pathname;
+  return (
+    <nav>
+      <A href="/" preload={false}>Home</A>
+      <A href="/docs" class="nav">Docs</A>
+      <button type="button" onClick={() => router.navigate("/login")}>Log in</button>
+      <button type="button" onClick={() => router.navigate("/", { replace: true })}>Home</button>
+      <button type="button" onClick={() => router.history.back()}>Back</button>
+      <button type="button" onClick={() => router.invalidate()}>Reload {pathname}</button>
+      <button type="button" onMouseEnter={() => router.preload("/docs")}>Docs</button>
+    </nav>
+  );
+}

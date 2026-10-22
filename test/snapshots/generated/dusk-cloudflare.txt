@@ -1,0 +1,559 @@
+=== .env.example ===
+# Copy this file to .env.local and fill it in. .env.local is not committed.
+# A value the browser may read is not a secret: it goes in .env.public (committed), not here.
+
+# The public URL of the app. Production answers only for this host.
+APP_URL=http://localhost:3000
+
+# Port of `dusk start`.
+PORT=3000
+
+# Interface of `dusk start`. Use 0.0.0.0 inside a container.
+HOST=127.0.0.1
+=== .env.public ===
+# Public values: every name in this file is readable in the browser, so the file is committed to git.
+# Never put a secret here: the build refuses a value that looks like a key, a token or a password.
+# A name with the DUSK_PUBLIC_ prefix is public too, in .env.local or the environment.
+SITE_NAME=app
+=== .gitignore ===
+node_modules
+dist
+coverage
+*.log
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+!.env.public
+*.pem
+*.key
+.dusk
+.vercel
+.netlify
+.wrangler
+=== README.md ===
+# app
+
+A Dusk app: file routes, loaders, server functions and server rendering.
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+## Scripts
+
+- `npm run dev` starts the development server with hot reload.
+- `npm run build` builds for production.
+- `npm run start` serves the production build (run `build` first).
+- `npm run typecheck` type-checks with `tsc --noEmit`.
+- `npm run lint` checks the code with Biome.
+- `npm run format` formats the code with Biome.
+- `npm run test` runs the tests once.
+- `npm run test:watch` runs the tests and re-runs them on change.
+
+## Project layout
+
+- `src/routes` maps files to URLs: `index.tsx` is `/`, `posts/[id].tsx` is `/posts/:id`, `_layout.tsx` wraps its folder, `[...rest].tsx` catches everything else. A file that exports `GET`, `POST`... (`api/health.ts`) is an API route.
+- `src/server` holds server-only code. A function made with `serverFn` can be called from components and loaders; in the browser it becomes a request to the server, with its input validated first.
+- `src/app.tsx` is the root component, `src/entry-server.ts` sets the security options, middleware and limits of the request handler.
+- `dusk build` writes a Cloudflare Worker (`dist/cloudflare/worker.mjs`, `wrangler.toml`); `npm run deploy` deploys it. Set `APP_URL` to the public address of the app.
+=== biome.json ===
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "files": {
+    "includes": ["**", "!**/dist", "!**/routeTree.gen.ts"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  }
+}
+=== dusk.config.ts ===
+import { defineConfig } from "@shadow-js/dusk/vite";
+
+export default defineConfig({
+  redirects: [{ source: "/home", destination: "/", permanent: true }],
+  headers: [{ source: "/api/**", headers: { "x-content-type-options": "nosniff" } }],
+  routeRules: {
+    "/about": { prerender: true },
+  },
+});
+=== package.json ===
+{
+  "name": "app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "dusk dev",
+    "build": "dusk build",
+    "start": "npx wrangler dev -c dist/cloudflare/wrangler.toml",
+    "deploy": "dusk build && npx wrangler deploy -c dist/cloudflare/wrangler.toml",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@shadow-js/core": "^1.0.0",
+    "@shadow-js/web": "^1.0.0",
+    "@shadow-js/router": "^1.0.0",
+    "@shadow-js/dusk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@shadow-js/vite": "^1.0.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.3",
+    "@types/node": "24.19.1",
+    "@biomejs/biome": "2.5.15",
+    "vitest": "5.0.3",
+    "happy-dom": "21.0.3",
+    "@shadow-js/testing": "^1.0.0",
+    "@testing-library/dom": "10.4.2"
+  }
+}
+=== src/app.tsx ===
+import type { ParentProps } from "@shadow-js/web";
+import "./index.css";
+
+/** The root component: wraps every page. The routed page arrives as `children`. */
+export default function App(props: ParentProps) {
+  return props.children;
+}
+=== src/components/NotFound.tsx ===
+import { A } from "@shadow-js/router";
+
+export function NotFound() {
+  return (
+    <section>
+      <h1 class="title">Page not found</h1>
+      <A to="/">Back to the start</A>
+    </section>
+  );
+}
+=== src/entry-server.ts ===
+import type { HandlerOptions } from "@shadow-js/dusk/server";
+
+const appUrl = new URL(process.env.APP_URL ?? "http://localhost:3000");
+
+/** Options of the request handler. Everything here has a safe default; see the Dusk docs. */
+export const options = {
+  security: {
+    // The Host header is attacker input: production answers only for the hosts of APP_URL.
+    ...(import.meta.env.PROD ? { allowedHosts: [appUrl.hostname] } : {}),
+    // Sent on https responses only. CSRF checks, secure headers and body limits are on by default.
+    headers: { hsts: { maxAge: 63_072_000, includeSubDomains: true } },
+    // A strict Content-Security-Policy with a fresh nonce per request. Production only: the dev server
+    // injects inline scripts. Add sources by directive when you load something from another origin.
+    ...(import.meta.env.PROD ? { csp: {} } : {}),
+  },
+} satisfies Omit<HandlerOptions, "manifest">;
+
+export default options;
+=== src/index.css ===
+:root {
+  font-family: system-ui, sans-serif;
+  color-scheme: light dark;
+}
+.shell {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem;
+}
+.nav {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.title {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+.button {
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.field {
+  display: block;
+  margin: 0.5rem 0;
+  padding: 0.4rem;
+  width: 100%;
+}
+=== src/routes/[...rest].tsx ===
+import { notFound as raiseNotFound } from "@shadow-js/router";
+import { NotFound } from "../components/NotFound";
+
+/** Matches every URL no other route matches and answers it with a 404 and the not-found page. */
+export const beforeLoad = () => {
+  throw raiseNotFound();
+};
+
+export function notFound() {
+  return <NotFound />;
+}
+
+export default function Missing() {
+  return null;
+}
+=== src/routes/_layout.tsx ===
+import type { Metadata, Viewport } from "@shadow-js/dusk";
+import { A, Outlet, type RouteErrorProps } from "@shadow-js/router";
+import { NotFound } from "../components/NotFound";
+
+/** The document head of every page: the title template and the description; pages set their own title. */
+export const metadata: Metadata = {
+  title: { default: "Dusk app", template: "%s · Dusk app" },
+  description: "A Dusk app.",
+};
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+
+export default function Layout() {
+  return (
+    <div class="shell">
+      <nav class="nav">
+        <A to="/">Home</A>
+        <A to="/posts">Posts</A>
+        <A to="/about">About</A>
+      </nav>
+      <main>
+        <Outlet />
+      </main>
+    </div>
+  );
+}
+
+/** Shown in place of a page whose loader or component threw. "Try again" renders it again. */
+export function error(props: RouteErrorProps) {
+  return (
+    <section>
+      <h1 class="title">Something went wrong</h1>
+      <p>{props.error instanceof Error ? props.error.message : "Unexpected error"}</p>
+      <button type="button" class="button" onClick={props.reset}>
+        Try again
+      </button>
+    </section>
+  );
+}
+
+/** The fallback when notFound() is called where no closer route shows its own page. */
+export function notFound() {
+  return <NotFound />;
+}
+=== src/routes/about.tsx ===
+import type { Metadata } from "@shadow-js/dusk";
+
+export const metadata: Metadata = { title: "About" };
+
+export default function About() {
+  return (
+    <section>
+      <h1 class="title">About</h1>
+      <p>Routes are files: this page is src/routes/about.tsx.</p>
+    </section>
+  );
+}
+=== src/routes/api/health.ts ===
+import { json, type RequestEvent } from "@shadow-js/dusk/server";
+
+/** GET /api/health: an API route is a file that exports HTTP-method handlers. */
+export const GET = (event: RequestEvent) => json({ ok: true, id: event.id });
+=== src/routes/index.test.tsx ===
+import { accessibleMatchers, render, userEvent } from "@shadow-js/testing/dom";
+import { expect, it } from "vitest";
+import Home from "./index";
+
+expect.extend(accessibleMatchers);
+
+it("counts clicks", async () => {
+  const view = render(() => <Home />);
+  const button = view.getByRole("button", { name: "Clicked 0 times" });
+  await userEvent.click(button);
+  expect(button.textContent).toBe("Clicked 1 times");
+});
+
+it("has one level-1 heading and a named button", () => {
+  const view = render(() => <Home />);
+  expect(view.container.querySelectorAll("h1")).toHaveLength(1);
+  expect(view.getByRole("button")).toHaveAccessibleName();
+});
+=== src/routes/index.tsx ===
+import { useStore } from "@shadow-js/core";
+import type { Metadata } from "@shadow-js/dusk";
+
+export const metadata: Metadata = { title: "Home" };
+
+export default function Home() {
+  const [count, setCount] = useStore(0);
+  return (
+    <section>
+      <h1 class="title">Dusk</h1>
+      <p>This page is rendered on the server and then made interactive in the browser.</p>
+      <button type="button" class="button" onClick={() => setCount((n) => n + 1)}>
+        Clicked {count()} times
+      </button>
+    </section>
+  );
+}
+=== src/routes/posts/[id].tsx ===
+import type { MetadataArgs } from "@shadow-js/dusk";
+import { useLoaderData } from "@shadow-js/router";
+import { NotFound } from "../../components/NotFound";
+import { getPost } from "../../server/posts";
+
+export const loader = ({ params }: { params: { id: string } }) => getPost({ id: params.id });
+
+type PostArgs = MetadataArgs<{ id: string }, { title: string }>;
+
+export const generateMetadata = ({ loaderData }: PostArgs) => ({
+  title: loaderData?.title ?? "Post",
+});
+
+/** Shown, with a 404, when getPost() calls notFound() for an unknown id. */
+export function notFound() {
+  return <NotFound />;
+}
+
+export default function Post() {
+  const post = useLoaderData<Awaited<ReturnType<typeof getPost>>>();
+  return (
+    <article>
+      <h1 class="title">{post()?.title}</h1>
+      <p>{post()?.body}</p>
+    </article>
+  );
+}
+=== src/routes/posts/index.tsx ===
+import { useStore } from "@shadow-js/core";
+import type { Metadata } from "@shadow-js/dusk";
+import { A, useLoaderData, useRouter } from "@shadow-js/router";
+import { For } from "@shadow-js/web";
+import { createPost, listPosts } from "../../server/posts";
+
+export const metadata: Metadata = { title: "Posts" };
+
+/** Runs on the server for the first request and in the browser for later navigations. */
+export const loader = () => listPosts(undefined);
+
+export default function Posts() {
+  const posts = useLoaderData<Awaited<ReturnType<typeof listPosts>>>();
+  const router = useRouter();
+  const [message, setMessage] = useStore("");
+
+  async function submit(event: SubmitEvent & { currentTarget: HTMLFormElement }) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    try {
+      await createPost({ title: data.get("title"), body: data.get("body") });
+      form.reset();
+      setMessage("");
+      await router.invalidate();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not save the post");
+    }
+  }
+
+  return (
+    <section>
+      <h1 class="title">Posts</h1>
+      <ul>
+        <For each={posts() ?? []}>
+          {(post) => (
+            <li>
+              <A to="/posts/:id" params={{ id: post.id }}>
+                {post.title}
+              </A>
+            </li>
+          )}
+        </For>
+      </ul>
+      <form onSubmit={submit}>
+        <input name="title" placeholder="Title" required class="field" />
+        <textarea name="body" placeholder="Body" required class="field" />
+        <button type="submit" class="button">
+          Add post
+        </button>
+        <p role="alert">{message()}</p>
+      </form>
+    </section>
+  );
+}
+=== src/server/db.server.ts ===
+/** An in-memory store that stands in for a database. Replace it with your own. */
+
+/** A blog post. */
+export interface Post {
+  id: string;
+  title: string;
+  body: string;
+}
+
+const posts = new Map<string, Post>([
+  [
+    "1",
+    { id: "1", title: "Hello, ShadowJS", body: "Loaders run on the server and in the browser." },
+  ],
+  [
+    "2",
+    { id: "2", title: "Server functions", body: "Call server code like a normal async function." },
+  ],
+]);
+
+export function listPosts(): Post[] {
+  return [...posts.values()];
+}
+
+export function findPost(id: string): Post | undefined {
+  return posts.get(id);
+}
+
+export function insertPost(input: { title: string; body: string }): Post {
+  const post = { id: String(posts.size + 1), ...input };
+  posts.set(post.id, post);
+  return post;
+}
+=== src/server/posts.test.ts ===
+// @vitest-environment node
+import { isNotFound } from "@shadow-js/dusk/server";
+import { createTestEvent } from "@shadow-js/dusk/testing";
+import { expect, it } from "vitest";
+import { createPost, getPost, listPosts } from "./posts";
+
+it("creates a post and reads it back through the server functions", async () => {
+  const event = createTestEvent();
+  const created = await createPost.invoke({ title: "Test", body: "From a test" }, event);
+  expect(await getPost.invoke({ id: created.id }, event)).toEqual(created);
+  expect(await listPosts.invoke(undefined, event)).toContainEqual(created);
+});
+
+it("rejects input that fails validation with a 400", async () => {
+  const rejected = createPost.invoke({ title: "" }, createTestEvent());
+  await expect(rejected).rejects.toMatchObject({ status: 400 });
+});
+
+it("answers an unknown post with notFound()", async () => {
+  const missing = getPost.invoke({ id: "missing" }, createTestEvent());
+  await expect(missing).rejects.toSatisfy(isNotFound);
+});
+=== src/server/posts.ts ===
+import { notFound, serverFn } from "@shadow-js/dusk/server";
+import { findPost, insertPost, listPosts as readPosts } from "./db.server";
+import { defineSchema, type Issue, stringField } from "./schema";
+
+const postId = defineSchema<{ id: string }>((input) => {
+  const issues: Issue[] = [];
+  const id = stringField(input, "id", 32, issues);
+  return issues.length > 0 ? { issues } : { value: { id } };
+});
+
+const newPost = defineSchema<{ title: string; body: string }>((input) => {
+  const issues: Issue[] = [];
+  const title = stringField(input, "title", 120, issues);
+  const body = stringField(input, "body", 2000, issues);
+  return issues.length > 0 ? { issues } : { value: { title, body } };
+});
+
+/** Lists the posts. GET: safe to call from a loader or to cache. */
+export const listPosts = serverFn({ method: "GET" }, () => readPosts());
+
+/** Reads one post; an unknown id renders the not-found page with status 404. */
+export const getPost = serverFn({ method: "GET", input: postId }, ({ id }) => {
+  const post = findPost(id);
+  if (post === undefined) throw notFound();
+  return post;
+});
+
+/** Creates a post. POST: the input is validated before this runs, and the CSRF check is on. */
+export const createPost = serverFn({ input: newPost }, (input) => insertPost(input));
+=== src/server/schema.ts ===
+import type { StandardSchemaV1 } from "@shadow-js/dusk/server";
+
+/** One problem found while validating input. */
+export interface Issue {
+  message: string;
+  path?: string[];
+}
+
+/**
+ * Builds a Standard Schema, the interface Zod, Valibot and ArkType also implement, so a server
+ * function can take any of them as its `input`. This one has no dependency; swap it for a library
+ * when your inputs grow.
+ */
+export function defineSchema<Output>(
+  check: (input: unknown) => { value: Output } | { issues: Issue[] },
+): StandardSchemaV1<unknown, Output> {
+  return { "~standard": { version: 1, vendor: "app", validate: check } };
+}
+
+/** Reads a string field of an unknown value, trimmed, or reports why it is not usable. */
+export function stringField(input: unknown, name: string, max: number, issues: Issue[]): string {
+  const value: unknown =
+    typeof input === "object" && input !== null ? Reflect.get(input, name) : undefined;
+  if (typeof value !== "string" || value.trim() === "") {
+    issues.push({ message: "Required", path: [name] });
+    return "";
+  }
+  if (value.length > max) issues.push({ message: `At most ${max} characters`, path: [name] });
+  return value.trim();
+}
+=== src/vite-env.d.ts ===
+/// <reference types="vite/client" />
+=== tsconfig.json ===
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "jsxImportSource": "@shadow-js/web",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["vite/client", "node"],
+    "paths": {
+      "~/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "vite.config.ts", "vitest.config.ts", "vitest.setup.ts"]
+}
+=== vite.config.ts ===
+import { cloudflare } from "@shadow-js/dusk/cloudflare";
+import { dusk } from "@shadow-js/dusk/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({ plugins: [dusk({ adapter: cloudflare() })] });
+=== vitest.config.ts ===
+import shadow from "@shadow-js/vite";
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  plugins: [shadow()],
+  test: { environment: "happy-dom", setupFiles: ["./vitest.setup.ts"] },
+});
+=== vitest.setup.ts ===
+import "@shadow-js/testing/auto-cleanup";

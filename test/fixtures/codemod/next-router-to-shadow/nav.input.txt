@@ -1,0 +1,18 @@
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+
+export function Nav() {
+  const router = useRouter();
+  const pathname = usePathname();
+  return (
+    <nav>
+      <Link href="/" prefetch={false}>Home</Link>
+      <Link href="/docs" className="nav">Docs</Link>
+      <button type="button" onClick={() => router.push("/login")}>Log in</button>
+      <button type="button" onClick={() => router.replace("/")}>Home</button>
+      <button type="button" onClick={() => router.back()}>Back</button>
+      <button type="button" onClick={() => router.refresh()}>Reload {pathname}</button>
+      <button type="button" onMouseEnter={() => router.prefetch("/docs")}>Docs</button>
+    </nav>
+  );
+}

@@ -1,0 +1,314 @@
+=== .gitignore ===
+node_modules
+dist
+coverage
+*.log
+*.tsbuildinfo
+.DS_Store
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+!.env.public
+*.pem
+*.key
+=== README.md ===
+# app
+
+A ShadowJS single-page app.
+
+## Getting started
+
+```bash
+npm install
+npm run dev
+```
+
+## Scripts
+
+- `npm run dev` starts the development server with hot reload.
+- `npm run build` builds for production.
+- `npm run preview` serves the production build locally.
+- `npm run typecheck` type-checks with `tsc --noEmit`.
+- `npm run lint` checks the code with Biome.
+- `npm run format` formats the code with Biome.
+- `npm run test` runs the tests once.
+- `npm run test:watch` runs the tests and re-runs them on change.
+=== biome.json ===
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "files": {
+    "includes": ["**", "!**/dist", "!**/routeTree.gen.ts"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double"
+    }
+  }
+}
+=== index.html ===
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>app</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+=== package.json ===
+{
+  "name": "app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@shadow-js/core": "^1.0.0",
+    "@shadow-js/web": "^1.0.0",
+    "@shadow-js/router": "^1.0.0"
+  },
+  "devDependencies": {
+    "@shadow-js/vite": "^1.0.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.3",
+    "tailwindcss": "4.3.3",
+    "@tailwindcss/vite": "4.3.3",
+    "@biomejs/biome": "2.5.15",
+    "vitest": "5.0.3",
+    "happy-dom": "21.0.3",
+    "@shadow-js/testing": "^1.0.0",
+    "@testing-library/dom": "10.4.2"
+  }
+}
+=== src/App.test.tsx ===
+import { createMemoryHistory } from "@shadow-js/router";
+import { accessibleMatchers, render, userEvent } from "@shadow-js/testing/dom";
+import { expect, it } from "vitest";
+import { App } from "./App";
+
+expect.extend(accessibleMatchers);
+
+const at = (path: string) => createMemoryHistory({ initialEntries: [path] });
+
+it("renders the route of the address", async () => {
+  const view = render(() => <App history={at("/about")} />);
+  expect(await view.findByRole("heading", { name: "About" })).toBeTruthy();
+});
+
+it("navigates with a link and shows the not-found page for an unknown address", async () => {
+  const view = render(() => <App history={at("/")} />);
+  await userEvent.click(await view.findByRole("link", { name: "About" }));
+  expect(await view.findByRole("heading", { name: "About" })).toBeTruthy();
+
+  const missing = render(() => <App history={at("/nope")} />);
+  expect(await missing.findByRole("heading", { name: "Page not found" })).toBeTruthy();
+});
+
+it("every page has one level-1 heading and named links", async () => {
+  const view = render(() => <App history={at("/")} />);
+  await view.findByRole("heading", { name: "ShadowJS" });
+  expect(view.container.querySelectorAll("h1")).toHaveLength(1);
+  for (const link of view.getAllByRole("link")) {
+    expect(link).toHaveAccessibleName();
+  }
+  const missing = render(() => <App history={at("/nope")} />);
+  await missing.findByRole("heading", { name: "Page not found" });
+  expect(missing.container.querySelectorAll("h1")).toHaveLength(1);
+});
+=== src/App.tsx ===
+import { onCleanup } from "@shadow-js/core";
+import { Outlet, type RouterOptions, RouterProvider } from "@shadow-js/router";
+import { createAppRouter } from "./router";
+
+/** The routed app. Pass a `history` (a memory history, say) to run it without a browser. */
+export function App(props: { history?: RouterOptions["history"] }) {
+  const router = createAppRouter(props.history);
+  onCleanup(() => router.dispose());
+  return (
+    <RouterProvider router={router}>
+      <Outlet />
+    </RouterProvider>
+  );
+}
+=== src/index.css ===
+@import "tailwindcss";
+=== src/main.tsx ===
+import { render } from "@shadow-js/web";
+import { App } from "./App";
+import "./index.css";
+
+const root = document.getElementById("app");
+if (root === null) throw new Error("Missing #app element");
+
+render(() => <App />, root);
+=== src/pages/About.tsx ===
+export function About() {
+  return (
+    <section>
+      <h1 class="text-3xl font-bold">About</h1>
+      <p>A ShadowJS single-page app with client-side routing.</p>
+    </section>
+  );
+}
+=== src/pages/Home.test.tsx ===
+import { accessibleMatchers, render, userEvent } from "@shadow-js/testing/dom";
+import { expect, it } from "vitest";
+import { Home } from "./Home";
+
+expect.extend(accessibleMatchers);
+
+it("counts clicks and lists the squares", async () => {
+  const view = render(() => <Home />);
+  expect(view.getByText("Count: 0")).toBeTruthy();
+  await userEvent.click(view.getByRole("button", { name: "Increment" }));
+  await userEvent.click(view.getByRole("button", { name: "Increment" }));
+  expect(view.getByText("Count: 2")).toBeTruthy();
+  expect(view.container.querySelectorAll("li")).toHaveLength(2);
+});
+
+it("has one level-1 heading, a name for every button, and alt text for every image", () => {
+  const view = render(() => <Home />);
+  expect(view.container.querySelectorAll("h1")).toHaveLength(1);
+  for (const button of view.getAllByRole("button")) {
+    expect(button).toHaveAccessibleName();
+  }
+  for (const image of view.container.querySelectorAll("img")) {
+    expect(image.getAttribute("alt")).not.toBeNull();
+  }
+});
+=== src/pages/Home.tsx ===
+import { useMemo, useStore } from "@shadow-js/core";
+import { For, Show } from "@shadow-js/web";
+
+export function Home() {
+  const [count, setCount] = useStore(0);
+  const squares = useMemo(() =>
+    Array.from({ length: Math.min(count(), 5) }, (_, i) => (i + 1) ** 2),
+  );
+
+  return (
+    <section>
+      <h1 class="text-3xl font-bold">ShadowJS</h1>
+      <p>Count: {count()}</p>
+      <button
+        type="button"
+        class="rounded bg-black px-4 py-2 text-white"
+        onClick={() => setCount((n) => n + 1)}
+      >
+        Increment
+      </button>
+      <Show when={count() > 0} fallback={<p>Press the button.</p>}>
+        <ul>
+          <For each={squares()}>{(value) => <li>{value}</li>}</For>
+        </ul>
+      </Show>
+    </section>
+  );
+}
+=== src/pages/Layout.tsx ===
+import { A, Outlet } from "@shadow-js/router";
+
+export function Layout() {
+  return (
+    <main class="mx-auto max-w-md p-8 font-sans">
+      <nav class="mb-6 flex gap-4">
+        <A to="/">Home</A>
+        <A to="/about">About</A>
+      </nav>
+      <Outlet />
+    </main>
+  );
+}
+=== src/pages/NotFound.tsx ===
+import { A } from "@shadow-js/router";
+
+export function NotFound() {
+  return (
+    <section>
+      <h1 class="text-3xl font-bold">Page not found</h1>
+      <A to="/">Back to the start</A>
+    </section>
+  );
+}
+=== src/router.tsx ===
+import { createRouter, defineRoute, type RouterOptions } from "@shadow-js/router";
+import { About } from "./pages/About";
+import { Home } from "./pages/Home";
+import { Layout } from "./pages/Layout";
+import { NotFound } from "./pages/NotFound";
+
+const home = defineRoute("/", { component: Home });
+const about = defineRoute("/about", { component: About });
+const missing = defineRoute("*", { component: NotFound });
+const root = defineRoute("", {
+  id: "root",
+  component: Layout,
+  children: [home, about, missing],
+});
+
+/** Creates the router of the app. Tests pass a memory history. */
+export function createAppRouter(history?: RouterOptions["history"]) {
+  return createRouter({ routes: [root], ...(history === undefined ? {} : { history }) });
+}
+=== src/vite-env.d.ts ===
+/// <reference types="vite/client" />
+=== tsconfig.json ===
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "preserve",
+    "jsxImportSource": "@shadow-js/web",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts", "vitest.config.ts", "vitest.setup.ts"]
+}
+=== vite.config.ts ===
+import shadow from "@shadow-js/vite";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig({ plugins: [shadow(), tailwindcss()] });
+=== vitest.config.ts ===
+import shadow from "@shadow-js/vite";
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  plugins: [shadow()],
+  test: { environment: "happy-dom", setupFiles: ["./vitest.setup.ts"] },
+});
+=== vitest.setup.ts ===
+import "@shadow-js/testing/auto-cleanup";

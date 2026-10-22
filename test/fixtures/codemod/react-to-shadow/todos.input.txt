@@ -1,0 +1,31 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+export function Todos({ initial }: { initial: string[] }) {
+  const [items, setItems] = useState(initial);
+  const [text, setText] = useState("");
+  const [filter, setFilter] = useState({ done: false });
+  const remaining = useMemo(() => items.length, [items]);
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    document.title = `${remaining} left`;
+  }, [remaining]);
+
+  const add = useCallback(() => {
+    setItems([...items, text]);
+    setText("");
+  }, [items, text]);
+
+  return (
+    <form onSubmit={add}>
+      <input ref={input} className="field" value={text} onChange={(event) => setText(event.target.value)} />
+      <button type="button" onClick={() => setFilter({ done: !filter.done })}>
+        {filter.done ? "Done" : "Open"}: {remaining}
+      </button>
+    </form>
+  );
+}

@@ -1,0 +1,16 @@
+import { useEffect, useMemo, useSignal } from "@shadow-js/core";
+import { For, Show, render } from "@shadow-js/web";
+
+export function Counter() {
+  const [count, setCount] = useSignal(0);
+  const double = useMemo(() => count() * 2);
+  useEffect(() => console.log(count()));
+  return (
+    <Show when={count() < 10} fallback={<p>Done</p>}>
+      <button onClick={() => setCount(count() + 1)}>{double()}</button>
+      <For each={[1, 2, 3]}>{(n) => <i>{n}</i>}</For>
+    </Show>
+  );
+}
+
+render(() => <Counter />, document.getElementById("app")!);

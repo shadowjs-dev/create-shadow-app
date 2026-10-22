@@ -1,0 +1,27 @@
+import { Fragment, render } from "preact";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { signal } from "@preact/signals";
+
+const visits = signal(0);
+
+export function Counter({ start }: { start: number }) {
+  const [count, setCount] = useState(start);
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
+
+  const bump = useCallback(() => setCount(count + 1), [count]);
+
+  return (
+    <Fragment>
+      <button ref={input} onClick={bump}>
+        {count}
+      </button>
+      <p>{visits.value} visits</p>
+    </Fragment>
+  );
+}
+
+render(<Counter start={1} />, document.body);
