@@ -39,7 +39,7 @@
     "create-shadow-app": "./dist/cli.js"
   },
   "dependencies": {
-    "oxc-parser": "0.153.0"
+    "oxc-parser": "0.154.0"
   },
   "keywords": [
     "shadowjs",
