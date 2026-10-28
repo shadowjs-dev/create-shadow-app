@@ -1,6 +1,6 @@
 {
   "name": "create-shadow-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Create a new app from a starter template, with optional Tailwind, Biome, Vitest, Convex and Clerk",
   "license": "MIT",
   "type": "module",
