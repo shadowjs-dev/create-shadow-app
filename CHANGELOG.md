@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+### Fixed
+
+- `--force` refuses to write through a symbolic link inside the target (a linked file or folder), so files can no longer land outside the project.
+
 ## 1.0.2
 
 ### Fixed

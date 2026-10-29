@@ -1,5 +1,6 @@
 import {
   existsSync,
+  lstatSync,
   mkdirSync,
   readdirSync,
   rmdirSync,
@@ -7,7 +8,7 @@ import {
   statSync,
   writeFileSync,
 } from "node:fs";
-import { dirname, resolve, sep } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { safeJoin } from "./names";
 
 /** Where a project is written, and the rules for writing it. */
@@ -111,9 +112,39 @@ function rejectCaseCollisions(files: readonly string[]): void {
 }
 
 /**
+ * Refuses a write that would pass through a symbolic link inside the target, because the bytes would land wherever the
+ * link points, outside the project (`package.json -> /elsewhere`, `src -> /elsewhere/dir`). The target folder itself
+ * may be a link: that is the folder the user named. A link that points nowhere is refused as well.
+ */
+function rejectSymlinks(root: string, paths: readonly string[]): void {
+  for (const path of paths) {
+    let current = root;
+    for (const part of relative(root, path).split(sep)) {
+      current = join(current, part);
+      let linked: boolean;
+      try {
+        linked = lstatSync(current).isSymbolicLink();
+      } catch (error) {
+        // Nothing there yet (or a file where a folder must go, which the write reports with the file's name), so
+        // nothing deeper can be a link; any other failure is a real error.
+        const code = error instanceof Error ? Reflect.get(error, "code") : undefined;
+        if (code === "ENOENT" || code === "ENOTDIR") break;
+        throw new Error(`${current} cannot be used: ${reasonOf(error)}`);
+      }
+      if (linked) {
+        throw new Error(
+          `${current} is a symbolic link: writing through it would put files outside the project. Remove the link or choose another folder.`,
+        );
+      }
+    }
+  }
+}
+
+/**
  * Writes a file map below `directory`.
  *
- * Everything is checked before the first byte is written: a path that would leave the project, two
+ * Everything is checked before the first byte is written: a path that would leave the project, a
+ * symbolic link inside the target that a file or folder would be written through, two
  * names that differ only by case, or a directory that is not empty (without `force`), throws and
  * leaves the disk untouched. With `force` existing files of the same name are overwritten and other
  * files stay. If a write fails part-way (a permission, a disk, a file where a folder must go), the
@@ -138,6 +169,10 @@ export function writeProject(
   rejectCaseCollisions([...files.keys()]);
   const state = inspectTarget(target);
   if (state === "not-empty" && !options.force) throw new Error(`${target} is not empty.`);
+  rejectSymlinks(
+    target,
+    targets.map(([, path]) => path),
+  );
   const createdFolders = missingFolders(
     target,
     targets.map(([, path]) => dirname(path)),
