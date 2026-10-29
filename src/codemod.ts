@@ -284,17 +284,53 @@ function mentionsASource(codemod: CodemodName, input: string): boolean {
   return false;
 }
 
-/** Source files under a folder, sorted, without the folders the codemods never enter. */
-function walk(folder: string): string[] {
+/** The part of a directory entry the walk reads. A `Dirent` fits. */
+export interface WalkEntry {
+  readonly name: string;
+  isDirectory(): boolean;
+  isFile(): boolean;
+}
+
+/**
+ * Source files under a folder, sorted, without the folders the codemods never enter (`node_modules`,
+ * `dist`, `.git`). The walk keeps its own stack of folders, so a tree of any depth is read without
+ * recursion, and each folder's files are appended one by one (a spread of a big array into `push` could
+ * pass the engine's argument limit). A symbolic link is neither a file nor a folder here, so it is never
+ * followed.
+ *
+ * @param folder The folder to read.
+ * @param readEntries Lists a folder. Tests pass a fake tree; the default reads the file system.
+ * @returns Absolute paths in depth-first order: the entries of a folder by name, a subfolder's files
+ *   where the subfolder sorts.
+ * @example
+ * import { walk } from "./codemod";
+ *
+ * const files = walk(process.cwd());
+ * @since 1.0.1
+ */
+export function walk(
+  folder: string,
+  readEntries: (folder: string) => readonly WalkEntry[] = (dir) =>
+    readdirSync(dir, { withFileTypes: true }),
+): string[] {
   const found: string[] = [];
-  const entries = readdirSync(folder, { withFileTypes: true }).sort((a, b) =>
-    a.name < b.name ? -1 : a.name > b.name ? 1 : 0,
-  );
-  for (const entry of entries) {
+  const sorted = (dir: string): WalkEntry[] =>
+    [...readEntries(dir)].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  const stack = [{ folder, entries: sorted(folder), next: 0 }];
+  while (stack.length > 0) {
+    const top = stack[stack.length - 1];
+    if (top === undefined) break;
+    const entry = top.entries[top.next];
+    if (entry === undefined) {
+      stack.pop();
+      continue;
+    }
+    top.next += 1;
     if (entry.name === "node_modules" || entry.name === "dist" || entry.name === ".git") continue;
-    const full = join(folder, entry.name);
-    if (entry.isDirectory()) found.push(...walk(full));
-    else if (
+    const full = join(top.folder, entry.name);
+    if (entry.isDirectory()) {
+      stack.push({ folder: full, entries: sorted(full), next: 0 });
+    } else if (
       entry.isFile() &&
       SUPPORTED_EXTENSIONS.some((extension) => entry.name.endsWith(extension)) &&
       !DECLARATION_FILE.test(entry.name)

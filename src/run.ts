@@ -29,6 +29,7 @@ import {
   isDuskBased,
   type LocalPack,
   type PackageManager,
+  resolveOptions,
   type ScaffoldOptions,
   TEMPLATE_INFO,
   type TemplateName,
@@ -768,6 +769,14 @@ async function execute(
     packageManager,
     local,
   };
+  // `resolveOptions` refuses combinations (a starter with an add-on it cannot take): that is a wrong
+  // command line, exit 2, not an unexpected failure.
+  try {
+    resolveOptions(input);
+  } catch (error) {
+    if (error instanceof Error) throw new UsageError(error.message);
+    throw error;
+  }
   const project = buildProject(input);
 
   const state = guard("CREATE_SHADOW_APP_WRITE_FAILED", () => inspectTarget(target));

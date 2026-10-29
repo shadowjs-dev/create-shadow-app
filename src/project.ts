@@ -7,6 +7,7 @@ import { applyTailwind } from "./addons/tailwind";
 import { applyUi } from "./addons/ui";
 import { applyVitest } from "./addons/vitest";
 import { applyLocal, localState, overrideField } from "./local";
+import { UsageError } from "./names";
 import {
   enabledAddons,
   isDuskBased,
@@ -195,6 +196,17 @@ function viteEnvTypes(draft: Draft): string {
 
 function manifest(draft: Draft): Record<string, unknown> {
   const { options } = draft;
+  // A project named like one of its own dependencies (`vite`, `vitest`, `@shadow-js/core`) cannot be
+  // installed: every package manager refuses to install a package into itself.
+  if (
+    Object.hasOwn(draft.dependencies, options.name) ||
+    Object.hasOwn(draft.devDependencies, options.name)
+  ) {
+    throw new UsageError(
+      `"${options.name}" is the name of a package this project depends on, so it cannot be installed into itself. Choose another name with --name.`,
+      "CREATE_SHADOW_APP_INVALID_NAME",
+    );
+  }
   const body: Record<string, unknown> = {
     name: options.name,
     private: true,

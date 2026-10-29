@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2
+
+### Fixed
+
+- A project named like one of its own dependencies (`vite`, `vitest`, `@shadow-js/core`) is refused with the usage exit code before anything is written, instead of producing a project no package manager can install.
+- An add-on a starter template cannot take (`--template content --convex`) exits with the usage code and the `CREATE_SHADOW_APP_INVALID_OPTION` code instead of the unexpected-error code.
+- The codemod's folder walk keeps its own stack instead of recursing and no longer spreads a folder's files into `push`, so a very deep or very wide tree is read without a stack overflow.
+
 ## 1.0.1
 
 ### Changed

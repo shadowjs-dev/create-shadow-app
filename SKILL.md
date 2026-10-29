@@ -5,7 +5,7 @@ description: "Work with create-shadow-app. Create a new app from a starter templ
 
 # create-shadow-app
 
-Version 1.0.1. Create a new app from a starter template, with optional Tailwind, Biome, Vitest, Convex and Clerk.
+Version 1.0.2. Create a new app from a starter template, with optional Tailwind, Biome, Vitest, Convex and Clerk.
 
 ## Where to read more
 
