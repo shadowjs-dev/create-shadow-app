@@ -39,8 +39,9 @@ npm create shadow-app@latest my-app
 npm create shadow-app@latest my-app -- --template dusk --tailwind --vitest
 ```
 
-ShadowJS 1.0.0 is not on npm yet. Until it is, build the packages from this repository and point
-the scaffolder at the tarballs (see [Before ShadowJS is published](#before-shadowjs-is-published)).
+By default the project depends on the ShadowJS packages on npm. To try changes in this repository that
+are not released yet, build the packages and point the scaffolder at the tarballs (see
+[Before ShadowJS is published](#before-shadowjs-is-published)).
 
 ## Usage
 
@@ -275,7 +276,7 @@ Scripts: `dev`, `build` (type-check, then `vite build`), `preview`, `typecheck`.
 vite.config.ts  dusk.config.ts  tsconfig.json  package.json  README.md  .env.example  .env.public
 src/app.tsx  src/entry-server.ts  src/index.css
 src/routes/_layout.tsx  index.tsx  about.tsx  [...rest].tsx  posts/index.tsx  posts/[id].tsx  api/health.ts
-src/server/posts.ts  db.server.ts  schema.ts       src/components/NotFound.tsx  src/lib/head.ts
+src/server/posts.ts  db.server.ts  schema.ts       src/components/NotFound.tsx
 ```
 
 - `_layout.tsx` is the shell with the navigation and exports `error` and `notFound`;
@@ -332,7 +333,7 @@ The `api` template is a JSON API on Dusk, with no pages: API routes, typed serve
 | --- | --- |
 | `--tailwind` | `tailwindcss` and `@tailwindcss/vite`, `tailwindcss()` after the app plugin, `src/index.css` with `@import "tailwindcss";`. |
 | `--biome` | `biome.json` (ignores `dist`, generated files), `lint` and `format` scripts. The generated sources pass `biome check`. |
-| `--vitest` | Vitest, happy-dom, `@shadow-js/testing`, `vitest.config.ts` and `vitest.setup.ts` as in `tools/local/smoke.mjs`, a `test` script and passing example tests (a counter test for `spa`, a counter and server-function tests for `start`). The example tests are also the accessibility checks of the generated app: one level-1 heading, a name for every button and link (`toHaveAccessibleName`), and alt text on every image. |
+| `--vitest` | Vitest, happy-dom, `@shadow-js/testing`, `vitest.config.ts` and `vitest.setup.ts` as in `tools/local/smoke.mjs`, a `test` script and passing example tests (a counter test for `spa`, a counter and server-function tests for `dusk`). The example tests are also the accessibility checks of the generated app: one level-1 heading, a name for every button and link (`toHaveAccessibleName`), and alt text on every image. |
 | `--convex` | `ConvexProvider` in `src/providers.tsx`, `convex/schema.ts`, `convex/tasks.ts` (a query and a mutation), a Tasks page, `VITE_CONVEX_URL` in `.env.example`, `convex/_generated` (the files `convex dev` writes, so the app builds first), a `convex` script. Run `convex dev` to create the deployment. |
 | `--clerk` | `ClerkProvider`, sign-in and sign-up pages, a protected `/dashboard`, `VITE_CLERK_PUBLISHABLE_KEY`. For `dusk`: `@clerk/backend`, a middleware that verifies every request, a gate that redirects signed-out visitors from `/dashboard` and a `requireUser` server function the loader calls. With Convex too: `ConvexProviderWithAuth` and `convex/auth.config.ts`. |
 | `--ui` | `components.json`, `src/lib/utils.ts` (the registry's own file: `cn()` and the `ClassValue` type, so `shadow-ui add` finds it unchanged), the `@/` alias (tsconfig and Vite), the `@shadow-js/ui` theme in `src/index.css`, and the dependencies the components use. Components are added with `npx shadow-ui add button`. Implies Tailwind, so `--ui --no-tailwind` is refused. |
@@ -366,7 +367,7 @@ build, starts the dev server and requests it, and for `dusk` starts the producti
 target and requests it.
 
 ```sh
-node scripts/verify-matrix.mjs                    # all 28 cells, 4 at a time
+node scripts/verify-matrix.mjs                    # all 39 cells, 4 at a time
 node scripts/verify-matrix.mjs --only spa:plain,dusk[node]:plain
 node scripts/verify-matrix.mjs --list             # the cell names
 node scripts/verify-matrix.mjs --jobs 2 --keep    # keep the apps
@@ -380,7 +381,7 @@ needs Chromium (`npx playwright-core install chromium`); CI runs it on Linux.
 
 The cells are: `spa` with no add-ons, with everything on, and with the add-ons in rows that cover
 every pair of choices (the router included); `dusk` with no add-ons, with everything on, and sixteen
-rows in which every add-on choice appears with every deployment target. The exhaustive generator
+rows in which every add-on choice appears with every deployment target; each starter (`content`, `dashboard`, `api`) runs with its optional add-ons in the rows that cover them. The exhaustive generator
 tests (`test/templates.test.ts`, `test/generated-snapshot.test.ts`) cover every subset of the
 add-ons without installing anything.
 
@@ -464,7 +465,7 @@ The `create-shadow-app` binary is `dist/cli.js`. Scaffolding loads nothing but N
 
 - **`convex/_generated` is a stand-in** until the first `convex dev`, which overwrites it.
 - **Clerk's sign-in pages use hash routing** (`routing="hash"`), so no splat route is needed.
-- **Start with Convex or Clerk reads `VITE_` variables** (`envPrefix: ["VITE_"]` in
+- **A `dusk` app with Convex or Clerk reads `VITE_` variables** (`envPrefix: ["VITE_"]` in
   `vite.config.ts`), because that is what `convex dev` and Clerk's docs write.
 - **`VITE_` values are read at build time, also on the server.** The server bundle of a Dusk app
   takes them from the environment during `vite build`, so build with them set (`.env.local`); a server

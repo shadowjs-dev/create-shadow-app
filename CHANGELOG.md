@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.4
+
+### Fixed
+
+- The react-router codemod's hint for `ScrollRestoration` names `scrollRestoration()`, the feature that exists in `@shadow-js/router/scroll`.
+
 ## 1.0.3
 
 ### Fixed

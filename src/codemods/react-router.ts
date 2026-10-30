@@ -60,7 +60,10 @@ const HINTS: ReadonlyMap<string, string> = new Map([
   ["Form", "Use `<Form action={serverFn}>` from `@shadow-js/dusk/client`, or a plain `<form>`."],
   ["useFetcher", "Use `useFetcher()` from `@shadow-js/dusk/client`."],
   ["useSubmit", "Use `useSubmit()` from `@shadow-js/dusk/client`."],
-  ["ScrollRestoration", "Install the `scroll()` feature from `@shadow-js/router/scroll`."],
+  [
+    "ScrollRestoration",
+    "Install the `scrollRestoration()` feature from `@shadow-js/router/scroll`.",
+  ],
 ]);
 
 /** Props of `Link` and `NavLink` that `A` has no equivalent for. */
