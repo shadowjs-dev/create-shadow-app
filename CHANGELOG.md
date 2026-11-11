@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.5
+
+### Fixed
+
+- Generated apps pin happy-dom 21.0.4 (GHSA-834v-8h66-3h79 in 21.0.3) and eslint 10.14.0.
+
 ## 1.0.4
 
 ### Fixed

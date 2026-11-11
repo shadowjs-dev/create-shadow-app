@@ -91,12 +91,15 @@ describe("[CSA-R2-9] the folder walk of the codemods does not recurse", () => {
     };
   };
 
+  // The cost is `path.join` on a path that grows to 40,000 characters, 20,000 times (about nine seconds on an idle machine,
+  // quadratic in the depth and unreachable with a real file system, whose paths stop near 4,096 characters). The default
+  // timeout of ten seconds made this test fail on a busy machine and pass alone.
   it("[CSA-R2-9.1] a tree 20000 folders deep is read to its file without overflowing the stack", () => {
     const found = walk("/r", nested(20_000));
     expect(found).toHaveLength(1);
     expect(found[0]?.endsWith("/deep.ts")).toBe(true);
     expect(found[0]?.split("/")).toHaveLength(20_000 + 3);
-  });
+  }, 120_000);
 
   it("[CSA-R2-9.2] files and folders come out in name order, a folder's files where it sorts", () => {
     const entry = (name: string, kind: "file" | "dir") => ({

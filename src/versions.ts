@@ -62,7 +62,7 @@ export const THIRD_PARTY_VERSIONS: Readonly<Record<string, string>> = Object.fre
   tailwindcss: "4.3.3",
   "@tailwindcss/vite": "4.3.3",
   vitest: "5.0.3",
-  "happy-dom": "21.0.3",
+  "happy-dom": "21.0.4",
   convex: "1.46.0",
   "@clerk/clerk-js": "6.38.1",
   "@clerk/backend": "3.23.1",
@@ -70,7 +70,7 @@ export const THIRD_PARTY_VERSIONS: Readonly<Record<string, string>> = Object.fre
   // Clerk's UI engine renders with React: @clerk/ui declares react as a peer, so it is listed explicitly.
   react: "19.3.0",
   "react-dom": "19.3.0",
-  eslint: "10.12.0",
+  eslint: "10.14.0",
   "class-variance-authority": "0.7.1",
   clsx: "2.1.1",
   "tailwind-merge": "3.7.0",
