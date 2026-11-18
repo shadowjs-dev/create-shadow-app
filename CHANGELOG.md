@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.1
+
+### Changed
+
+- `oxc-parser` 0.158 (was 0.153).
+- New projects pin `@biomejs/biome` 2.6.6 (its `biome.json` names the 2.6.6 schema), `vitest` 5.1.0, `tailwindcss` and `@tailwindcss/vite` 4.3.5, `@types/node` 24.19.2, `convex` 1.49.0, `@clerk/clerk-js` 6.42.3, `@clerk/backend` 3.27.0 and `@clerk/ui` 1.42.4.
+
+### Fixed
+
+- The generated `biome.json` leaves Markdown and YAML as written. Biome 2.6 formats Markdown and put a blank line at the top of a content post's front matter, so `biome check` failed in a new `content` project.
+
 ## 1.1.0
 
 ### Changed

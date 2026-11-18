@@ -65,7 +65,7 @@ npm run dev
 - `dusk build` writes a Cloudflare Worker (`dist/cloudflare/worker.mjs`, `wrangler.toml`); `npm run deploy` deploys it. Set `APP_URL` to the public address of the app.
 === biome.json ===
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
   "files": {
     "includes": ["**", "!**/dist", "!**/routeTree.gen.ts"]
   },
@@ -83,6 +83,16 @@ npm run dev
   "javascript": {
     "formatter": {
       "quoteStyle": "double"
+    }
+  },
+  "markdown": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "yaml": {
+    "formatter": {
+      "enabled": false
     }
   }
 }
@@ -123,9 +133,9 @@ export default defineConfig({
     "@shadow-js/vite": "^1.0.0",
     "typescript": "7.0.2",
     "vite": "8.3.3",
-    "@types/node": "24.19.1",
-    "@biomejs/biome": "2.5.15",
-    "vitest": "5.0.3",
+    "@types/node": "24.19.2",
+    "@biomejs/biome": "2.6.6",
+    "vitest": "5.1.0",
     "happy-dom": "21.0.4",
     "@shadow-js/testing": "^1.0.0",
     "@testing-library/dom": "10.4.2"

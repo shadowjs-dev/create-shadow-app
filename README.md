@@ -399,8 +399,8 @@ The end-to-end test is `npx vitest run test/matrix.e2e.test.ts`; `SHADOW_E2E_ONL
 ## Versions
 
 `VERSIONS` is the single source of the ranges written into projects: ShadowJS packages as `^1.0.0`,
-every third-party tool as an exact pin (vite 8.3.3, typescript 7.0.2, @biomejs/biome 2.5.15,
-tailwindcss and @tailwindcss/vite 4.3.3, vitest 5.0.3, ...). A test compares each pin with what the
+every third-party tool as an exact pin (vite 8.3.3, typescript 7.0.2, @biomejs/biome 2.6.6,
+tailwindcss and @tailwindcss/vite 4.3.5, vitest 5.1.0, ...). A test compares each pin with what the
 repository itself declares and has installed, so a pin cannot drift unnoticed.
 
 ## Example

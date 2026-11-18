@@ -76,7 +76,7 @@ Run `npx convex dev` in a second terminal. The first time it asks you to log in,
 3. In the Clerk dashboard create a JWT template named `convex`, then run `npx convex env set CLERK_JWT_ISSUER_DOMAIN <the Issuer of that template>`. `convex/auth.config.ts` trusts it and `ConvexProviderWithAuth` sends the token, so `ctx.auth.getUserIdentity()` works in your functions.
 === biome.json ===
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
   "files": {
     "includes": ["**", "!**/dist", "!**/routeTree.gen.ts", "!convex/_generated"]
   },
@@ -94,6 +94,16 @@ Run `npx convex dev` in a second terminal. The first time it asks you to log in,
   "javascript": {
     "formatter": {
       "quoteStyle": "double"
+    }
+  },
+  "markdown": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "yaml": {
+    "formatter": {
+      "enabled": false
     }
   }
 }
@@ -411,21 +421,21 @@ export default [{ ignores: ["dist", "convex/_generated"] }, shadow.configs.recom
     "class-variance-authority": "0.7.1",
     "@shadow-js/primitives": "^1.0.0",
     "@shadow-js/convex": "^1.0.0",
-    "convex": "1.46.0",
+    "convex": "1.49.0",
     "@shadow-js/clerk": "^1.0.0"
   },
   "devDependencies": {
     "@shadow-js/vite": "^1.0.0",
     "typescript": "7.0.2",
     "vite": "8.3.3",
-    "tailwindcss": "4.3.3",
-    "@tailwindcss/vite": "4.3.3",
-    "@biomejs/biome": "2.5.15",
-    "vitest": "5.0.3",
+    "tailwindcss": "4.3.5",
+    "@tailwindcss/vite": "4.3.5",
+    "@biomejs/biome": "2.6.6",
+    "vitest": "5.1.0",
     "happy-dom": "21.0.4",
     "@shadow-js/testing": "^1.0.0",
     "@testing-library/dom": "10.4.2",
-    "@types/node": "24.19.1",
+    "@types/node": "24.19.2",
     "@shadow-js/ui": "^1.0.0",
     "eslint": "10.14.0",
     "@shadow-js/eslint-plugin": "^1.0.0",

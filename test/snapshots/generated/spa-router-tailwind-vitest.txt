@@ -37,7 +37,7 @@ npm run dev
 - `npm run test:watch` runs the tests and re-runs them on change.
 === biome.json ===
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
   "files": {
     "includes": ["**", "!**/dist", "!**/routeTree.gen.ts"]
   },
@@ -55,6 +55,16 @@ npm run dev
   "javascript": {
     "formatter": {
       "quoteStyle": "double"
+    }
+  },
+  "markdown": {
+    "formatter": {
+      "enabled": false
+    }
+  },
+  "yaml": {
+    "formatter": {
+      "enabled": false
     }
   }
 }
@@ -96,10 +106,10 @@ npm run dev
     "@shadow-js/vite": "^1.0.0",
     "typescript": "7.0.2",
     "vite": "8.3.3",
-    "tailwindcss": "4.3.3",
-    "@tailwindcss/vite": "4.3.3",
-    "@biomejs/biome": "2.5.15",
-    "vitest": "5.0.3",
+    "tailwindcss": "4.3.5",
+    "@tailwindcss/vite": "4.3.5",
+    "@biomejs/biome": "2.6.6",
+    "vitest": "5.1.0",
     "happy-dom": "21.0.4",
     "@shadow-js/testing": "^1.0.0",
     "@testing-library/dom": "10.4.2"

@@ -57,16 +57,16 @@ export const THIRD_PARTY_VERSIONS: Readonly<Record<string, string>> = Object.fre
   // The optional peer of `@shadow-js/testing/dom`: npm does not install optional peers, and the
   // generated example test imports that subpath, so the vitest add-on installs it.
   "@testing-library/dom": "10.4.2",
-  "@types/node": "24.19.1",
-  "@biomejs/biome": "2.5.15",
-  tailwindcss: "4.3.3",
-  "@tailwindcss/vite": "4.3.3",
-  vitest: "5.0.3",
+  "@types/node": "24.19.2",
+  "@biomejs/biome": "2.6.6",
+  tailwindcss: "4.3.5",
+  "@tailwindcss/vite": "4.3.5",
+  vitest: "5.1.0",
   "happy-dom": "21.0.4",
-  convex: "1.46.0",
-  "@clerk/clerk-js": "6.38.1",
-  "@clerk/backend": "3.23.1",
-  "@clerk/ui": "1.39.1",
+  convex: "1.49.0",
+  "@clerk/clerk-js": "6.42.3",
+  "@clerk/backend": "3.27.0",
+  "@clerk/ui": "1.42.4",
   // Clerk's UI engine renders with React: @clerk/ui declares react as a peer, so it is listed explicitly.
   react: "19.3.0",
   "react-dom": "19.3.0",
@@ -98,7 +98,7 @@ export const VERSIONS: Readonly<Record<string, string>> = Object.freeze({
  * @returns Its version range.
  * @throws Error for a package that has no entry in {@link VERSIONS}.
  * @example
- * versionOf("tailwindcss"); // "4.3.3"
+ * versionOf("tailwindcss"); // "4.3.5"
  * @since 1.0.0
  */
 export function versionOf(name: string): string {
