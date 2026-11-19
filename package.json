@@ -57,7 +57,7 @@
     "url": "https://github.com/shadowjs-dev/create-shadow-app/issues"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.6",
+    "@biomejs/biome": "2.6.8",
     "@types/node": "^24.0.0",
     "happy-dom": "21.0.4",
     "tsdown": "0.23.7",
